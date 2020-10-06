@@ -7,19 +7,32 @@ class Client:
 		self.connectionSocket = socket(AF_INET, SOCK_STREAM)
 		self.serverAddress = (hostname, port)
 		self.connectionSocket.connect(self.serverAddress)
+		self.isRunning = True
 	def run(self):
-		toServer = input("You: ")
-		self.connectionSocket.send(toServer.encode())
-		data = self.connectionSocket.recv(1024).decode()
-		if not data:
-			self.connectionSocket.close()
-			return
-		else:
-			print(data)
+		while self.isRunning:
+			toServer = input("You: ")
+			if "auth_shutdown" in toServer:
+				# don't use a break here.
+				# we want to send to the server.
+				# let this little loop finish its last
+				# iteration
+				self.isRunning = False
+			elif "exit" in toServer:
+				# we can exit immediately.
+				# don't bother our precious server.
+				break
+			self.connectionSocket.send(toServer.encode())
+			data = self.connectionSocket.recv(1024).decode()
+			if not data:
+				print("[Client]: No response from the server.")
+				break
+			else:
+				print("[Server]: {}".format(data))
 	def input_handler(self, connection_socket, data):
-		pass
+		five = 5
 	def shutdown(self):
 		self.connectionSocket.close()
+		print("[Client]: Disconnected from server.")
 
 def main():
 	client = Client()
