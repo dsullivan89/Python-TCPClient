@@ -11,6 +11,7 @@ class Client:
 		self.isRunning = self.connect_to(self.serverAddress)
 		return self.isRunning
 	def run(self):
+
 		while self.isRunning:
 			toServer = input("You: ")
 			if "auth_shutdown" in toServer:
@@ -32,6 +33,19 @@ class Client:
 				self.input_handler(self.connectionSocket, data)
 	def input_handler(self, connection_socket, data):
 		print("[Server]: {}".format(data))
+	# this function is called at the very begining to make sure
+	# we have a valid username.
+	def shake_hands(self):
+		while True:
+			name = input("Username: ")
+			toServer = "req_username " + name + "\n"
+			self.send_to(self.client_socket, toServer)
+			fromServer = self.receive_from(self.client_socket)
+			if "ack_username" in fromServer:
+				self.username = name
+				break
+			else
+				print("That username is unavailable.")
 	def connect_to(self, address):
 		result = False
 		try:
