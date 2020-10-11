@@ -11,7 +11,7 @@ class Client:
 		self.isRunning = self.connect_to(self.serverAddress)
 		return self.isRunning
 	def run(self):
-
+		self.shake_hands()
 		while self.isRunning:
 			toServer = input("You: ")
 			if "auth_shutdown" in toServer:
@@ -29,6 +29,12 @@ class Client:
 			if not data:
 				print("[Client]: No response from the server.")
 				break
+			elif "keep_alive" in data:
+				while True:
+					self.send_to(self.connectionSocket, "keep_alive\n")
+					fromServer = self.receive_from(self.connectionSocket)
+					if "resume" in fromServer:
+						break
 			else:
 				self.input_handler(self.connectionSocket, data)
 	def input_handler(self, connection_socket, data):
@@ -39,12 +45,12 @@ class Client:
 		while True:
 			name = input("Username: ")
 			toServer = "req_username " + name + "\n"
-			self.send_to(self.client_socket, toServer)
-			fromServer = self.receive_from(self.client_socket)
+			self.send_to(self.connectionSocket, toServer)
+			fromServer = self.receive_from(self.connectionSocket)
 			if "ack_username" in fromServer:
 				self.username = name
 				break
-			else
+			elif "ack_denied" in fromServer:
 				print("That username is unavailable.")
 	def connect_to(self, address):
 		result = False
