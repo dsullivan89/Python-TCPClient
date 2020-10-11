@@ -7,35 +7,33 @@ from socket import *
 class Client:
 	def init(self, hostname, port):
 		self.connectionSocket = socket(AF_INET, SOCK_STREAM)
+		self.connectionSocket.settimeout(30.0)
 		self.serverAddress = (hostname, port)
 		self.isRunning = self.connect_to(self.serverAddress)
+		self.isWaitingForFriends = False
 		return self.isRunning
 	def run(self):
 		self.shake_hands()
 		while self.isRunning:
-			toServer = input("You: ")
-			if "auth_shutdown" in toServer:
-				# don't use a break here.
-				# we want to send to the server.
-				# let this little loop finish its last
-				# iteration
-				self.isRunning = False
-			elif "exit" in toServer:
-				# we can exit immediately.
-				# don't bother our precious server.
-				break
-			self.send_to(self.connectionSocket, toServer)
+			if not self.isWaitingForFriends:
+				toServer = raw_input("You: ")
+				if "auth_shutdown" in toServer:
+					# don't use a break here.
+					# we want to send to the server.
+					# let this little loop finish its last
+					# iteration
+					self.isRunning = False
+				elif "exit" in toServer:
+					# we can exit immediately.
+					# don't bother our precious server.
+					break
+				self.send_to(self.connectionSocket, toServer)
 			data = self.receive_from(self.connectionSocket)
-			if not data:
-				print("[Client]: No response from the server.")
-				break
-			elif "keep_alive" in data:
-				while True:
-					self.send_to(self.connectionSocket, "keep_alive\n")
-					fromServer = self.receive_from(self.connectionSocket)
-					if "resume" in fromServer:
-						break
-			else:
+			if data:
+				if "att_match_found" in data:
+					self.isWaitingForFriends = False
+					print("Match found! Abuse that nerd!")
+					continue
 				self.input_handler(self.connectionSocket, data)
 	def input_handler(self, connection_socket, data):
 		print("[Server]: {}".format(data))
@@ -43,14 +41,17 @@ class Client:
 	# we have a valid username.
 	def shake_hands(self):
 		while True:
-			name = input("Username: ")
+			name = raw_input("Username: ")
 			toServer = "req_username " + name + "\n"
 			self.send_to(self.connectionSocket, toServer)
 			fromServer = self.receive_from(self.connectionSocket)
 			if "ack_username" in fromServer:
 				self.username = name
+				print("Login success.")
+				self.isWaitingForFriends = True
+				print("Waiting for opponents...")
 				break
-			elif "ack_denied" in fromServer:
+			elif "req_denied" in fromServer:
 				print("That username is unavailable.")
 	def connect_to(self, address):
 		result = False
