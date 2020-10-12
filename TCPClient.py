@@ -10,7 +10,7 @@ class Client:
 		# self.connectionSocket.settimeout(30.0)
 		self.serverAddress = (hostname, port)
 		self.isRunning = self.connect_to(self.serverAddress)
-		self.isWaitingForFriends = True
+		self.isWaitingForFriends = False
 		return self.isRunning
 	def run(self):
 		self.shake_hands()
@@ -33,6 +33,7 @@ class Client:
 				if "att_match_found" in data:
 					self.isWaitingForFriends = False
 					print("Match found! Abuse that nerd!")
+					continue
 				self.input_handler(self.connectionSocket, data)
 	def input_handler(self, connection_socket, data):
 		print("[Server]: {}".format(data))
