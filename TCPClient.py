@@ -7,10 +7,10 @@ from socket import *
 class Client:
 	def init(self, hostname, port):
 		self.connectionSocket = socket(AF_INET, SOCK_STREAM)
-		self.connectionSocket.settimeout(30.0)
+		# self.connectionSocket.settimeout(30.0)
 		self.serverAddress = (hostname, port)
 		self.isRunning = self.connect_to(self.serverAddress)
-		self.isWaitingForFriends = False
+		self.isWaitingForFriends = True
 		return self.isRunning
 	def run(self):
 		self.shake_hands()
@@ -33,7 +33,6 @@ class Client:
 				if "att_match_found" in data:
 					self.isWaitingForFriends = False
 					print("Match found! Abuse that nerd!")
-					continue
 				self.input_handler(self.connectionSocket, data)
 	def input_handler(self, connection_socket, data):
 		print("[Server]: {}".format(data))
