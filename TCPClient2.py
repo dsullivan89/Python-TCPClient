@@ -2,6 +2,7 @@ import socket
 import threading
 
 class Client:
+	keep_alive = True
 	def init(self, host_name, port):
 		self.user_name = raw_input("Username: ")
 
@@ -15,27 +16,57 @@ class Client:
 		write_thread = threading.Thread(target=self.write_thread)
 		write_thread.start()
 
+		read_thread.join()
+		write_thread.join()
+
 	def read_thread(self):
-		while True:
+		while self.is_alive():
 			try:
 				message = self.client_socket.recv(1024).decode()
-				if message == 'req_username':
+				if "req_username" in message:
 					self.client_socket.send(self.user_name.encode())
+				elif "req_shutdown" in message:
+					begin_shutdown()
+					print("Goodbye!")
+
+					break
 				else:
 					print(message)
 			except:
-				print("An error occured.")
 				self.client_socket.close()
+				self.begin_shutdown()
 				break
 	def write_thread(self):
-		while True:
+		while self.is_alive():
 			message = '{}: {}'.format(self.user_name, raw_input(''))
-			self.client_socket.send(message.encode())
-
+			try:
+				self.client_socket.send(message.encode())
+				if "auth_shutdown" in message:
+					self.begin_shutdown()
+					break
+			except:
+				break
+	def is_alive(self):
+		result = None
+		lock = threading.Lock()
+		lock.acquire()
+		try:
+			result = Client.keep_alive
+		finally:
+			lock.release()
+			return result
+	def begin_shutdown(self):
+		lock = threading.Lock()
+		lock.acquire()
+		try:
+			Client.keep_alive = False
+		finally:
+			lock.release()
+			
 
 def main():
 	client = Client()
-	client.init("localhost", 5555)
+	client.init("192.168.1.117", 5555)
 
 if __name__ == '__main__':
 	main()
