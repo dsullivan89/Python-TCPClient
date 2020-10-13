@@ -4,11 +4,11 @@ import threading
 class Client:
 	keep_alive = True
 	def init(self, host_name, port):
-		self.user_name = raw_input("Username: ")
-
 		self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		server_address = (host_name, port)
 		self.client_socket.connect(server_address)
+
+		self.user_name = raw_input("Username: ")
 
 		read_thread = threading.Thread(target=self.read_thread)
 		read_thread.start()
